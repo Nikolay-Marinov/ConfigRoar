@@ -10,6 +10,9 @@
 .PARAMETER TenantID
     The ID of your Azure Tenant
 
+.PARAMETER tempsourcepath
+Path to temporary folder to save files. The size is approx. 4.5 GB
+
 .NOTES
     Version:        1
     Author:         Nikolay Marinov

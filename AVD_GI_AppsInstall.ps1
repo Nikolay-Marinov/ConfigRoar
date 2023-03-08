@@ -2,25 +2,22 @@
 .SYNOPSIS
     www.configroar.com 
     This script is used for initial application configuration for applications for Azure VIrtual Desktop  
-
 .DESCRIPTION
     The script downloads some applications. The Office 365 setup.exe as well as configuration file, need to be prepared beforehand
-
-
 .PARAMETER TenantID
     The ID of your Azure Tenant
-
 .PARAMETER tempsourcepath
 Path to temporary folder to save files. The size is approx. 4.5 GB
-
 .NOTES
-    Version:        1
+    Version:        1.5
     Author:         Nikolay Marinov
     Creation date:  23.01.2023
-    Last modified:  23.01.2023
+    Last modified:  08.03.2023
+
+    History of Changes: 
+    V 1.5 - Some additional optimization for Teams.
   
 .EXAMPLE 
-
 #>
 [CmdletBinding()]
 param(
@@ -28,17 +25,29 @@ param(
     $tenantid="",
 
     [Parameter(Mandatory = $false)]
-    $tempsourcepath="c:\tmpavd"
+    $tempsourcepath="c:\tmpavd",
+
+    [Parameter(Mandatory = $false)]
+    $O365ConfigFile="c:\tmp\configuration.xml", 
+
+    [Parameter(Mandatory = $false)]
+    $O365SetupFile="c:\tmp\setup.exe"
 
 )
 
-if(!(Test-Path "$tempsourcepath\")){New-Item "$tempsourcepath\" -ItemType Directory}
+if(!(Test-Path "$tempsourcepath\")){
+New-Item "$tempsourcepath\" -ItemType Directory
+New-Item "$tempsourcepath\O365\" -ItemType Directory
+}
 
 
 ########################################
 ##INSTALLATION OF OFFICE 365 (No OneDrive)
 ########################################
 try{
+
+Copy-Item -Path $O365SetupFile -Destination "$tempsourcepath\O365\setup.exe" -Force -PassThru
+Copy-Item -Path $O365ConfigXML -Destination "$tempsourcepath\O365\configuration.xml" -Force -PassThru
 
 if(!(Test-Path "$tempsourcepath\O365\setup.exe")){throw 1}
 if(!(Test-Path "$tempsourcepath\O365\configuration.xml")){throw 1}  
@@ -91,7 +100,17 @@ New-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\OneDrive\" -Name "KFMS
 ##INSTALLATION AND OPTIMIZATION OF TEAMS 
 ########################################
 
+
+
 Invoke-WebRequest -Uri "https://teams.microsoft.com/downloads/desktopurl?env=production&plat=windows&arch=x64&managedInstaller=true&download=true" -OutFile "$tempsourcepath\teams.msi"
+
+Invoke-WebRequest -Uri "https://aka.ms/vs/16/release/vc_redist.x64.exe" -OutFile "$tempsourcepath\vc_redist.x64.exe" 
+ 
+Invoke-WebRequest -Uri "https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RE4AQBt" -OutFile "$tempsourcepath\MsRdcWebRTCSvc_HostSetup.msi" 
+
+Start-Process "$tempsourcepath\vc_redist.x64.exe" -ArgumentList @('/q', '/norestart') -NoNewWindow -Wait -PassThru 
+
+Start-Process msiexec.exe -ArgumentList "/i $tempsourcepath\MsRdcWebRTCSvc_HostSetup.msi /l*v $tempsourcepath\MsRdcWebRTCSvc_HostSetup_Install.log /q /n" -Wait  
 
 #pre-install configuration
 New-Item -Path "HKLM:\SOFTWARE\Microsoft\Teams\" -Force -ea SilentlyContinue
@@ -122,5 +141,5 @@ $ExitCode = $proc.ExitCode
 ##END OF FSLOGIX APPS  INSTALLATION 
 ########################################
 
-#Cleanup
-Remove-Item $tempsourcepath -Force -Confirm
+#Cleanup (Optional)
+#Remove-Item $tempsourcepath -Force -Confirm

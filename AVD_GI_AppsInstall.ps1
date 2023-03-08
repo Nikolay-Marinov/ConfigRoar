@@ -6,8 +6,16 @@
     The script downloads some applications. The Office 365 setup.exe as well as configuration file, need to be prepared beforehand
 .PARAMETER TenantID
     The ID of your Azure Tenant
+    
 .PARAMETER tempsourcepath
 Path to temporary folder to save files. The size is approx. 4.5 GB
+
+.PARAMETER O365ConfigFile
+(optional): This is the path to the Office 365 configuration file. If not specified, the default value will be "c:\tmp\configuration.xml".
+
+.PARAMETER O365SetupFile 
+(optional): This is the path to the Office 365 setup file. If not specified, the default value will be "c:\tmp\setup.exe".
+
 .NOTES
     Version:        1.5
     Author:         Nikolay Marinov
